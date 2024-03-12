@@ -16,3 +16,12 @@ class ExtractorModel(BaseModel):
             }
         }
     
+
+class CalendarInterval(str, Enum):
+    # minute = "minute"
+    hour = "hour"
+    day = "day"
+    week = "week"
+    month = "month"
+    quarter = "quarter"
+    year = "year"

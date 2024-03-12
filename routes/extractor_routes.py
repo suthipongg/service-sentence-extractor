@@ -2,22 +2,23 @@ from fastapi import APIRouter, BackgroundTasks, status, HTTPException, Body, Dep
 from typing import Annotated
 from bson import ObjectId
 from config.db import extracted_collection
-from schemas.extract_schema import extract_serializer, extracts_serializer
+from schemas.extract_schema import extracts_serializer
 from controllers.extractor import SentenceExtractor
 from controllers.utils import Utils
 from config.security import get_token, UnauthorizedMessage
-from models.extract_model import ExtractorModel
+from models.extract_model import ExtractorModel, CalendarInterval
 import pymongo
 import os, sys
+from config.apm_client import client
 
 
 
-print('SentenceExtractor Loading :::')
+print('Sentence Extractor Loading :::')
 st = SentenceExtractor()
-print('SentenceExtractor Start :::')
+print('Sentence Extractor Start :::')
 
 utils = Utils()
-extractor_model = APIRouter()
+extractor_model = APIRouter(tags=["SentenceE Extractor"])
 
 @extractor_model.post(
         "/extractor",
@@ -49,6 +50,8 @@ async def extractor(
 
             background_tasks.add_task(utils.bulk_extracted, datas=[extracted])
             return extracted
+        else:
+            raise HTTPException(status_code=400, detail="sentence not provided.")
     except HTTPException as http_exception:
         raise http_exception
     except Exception as e:  
@@ -56,6 +59,7 @@ async def extractor(
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         print(exc_type, fname, exc_tb.tb_lineno)
         print(e)
+        client.capture_exception()
         raise HTTPException(status_code=500, detail="Internal Server Error") from e  
     
 
@@ -131,9 +135,44 @@ async def find_all_extracted(
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         print(exc_type, fname, exc_tb.tb_lineno)
         print(e)
-        # client.capture_exception()  
+        client.capture_exception()  
+        raise HTTPException(status_code=500, detail="Internal Server Error") from e  
+
+
+@extractor_model.get(
+        "/extractor/report",
+        responses={status.HTTP_401_UNAUTHORIZED: dict(model=UnauthorizedMessage)},
+        )
+async def extractor_report(
+            start_date: str = Query(
+                default = utils.first_day.strftime("%Y-%m-%dT00:00:00"),
+                description = "Filter start datetime"
+            ),
+            end_date: str = Query(
+                default = utils.last_day.strftime("%Y-%m-%dT23:59:59"),
+                description = "Filter start datetime"
+            ),
+            calendar_interval: CalendarInterval = Query(
+                default= "day",
+                description="Calendar Interval"
+            ),
+            token_auth: str = Depends(get_token),
+        ):
+    try:
+
+        result = utils.group_by_sentence({"start_date": start_date, "end_date": end_date, "type": "setting", "calendar_interval":calendar_interval.value})
+        return result
+    except HTTPException as http_exception:
+        raise http_exception
+    except Exception as e:  
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
+        print(e)
+        client.capture_exception()  
         raise HTTPException(status_code=500, detail="Internal Server Error") from e  
     
+
 @extractor_model.get(
         "/extractor/{id}",
         responses={status.HTTP_401_UNAUTHORIZED: dict(model=UnauthorizedMessage)},
@@ -155,7 +194,7 @@ async def get_one_extracted(
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         print(exc_type, fname, exc_tb.tb_lineno)
         print(e)
-        # client.capture_exception()
+        client.capture_exception()
         raise HTTPException(status_code=500, detail="Internal Server Error") from e
     
 
@@ -180,6 +219,5 @@ async def delete_extractor(
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         print(exc_type, fname, exc_tb.tb_lineno)
         print(e)
-        # client.capture_exception()
+        client.capture_exception()
         raise HTTPException(status_code=500, detail="Internal Server Error") from e
-
