@@ -9,6 +9,10 @@ class ExtractorModel(BaseModel):
     created_at: str = datetime.now().isoformat()
     counter: int = 1
 
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.created_at = datetime.now().isoformat()
+
     class Config:
         json_schema_extra = {
             "example": {
