@@ -6,6 +6,8 @@ from config.db import es_client
 from elasticsearch.helpers import bulk
 from datetime import datetime, date, timedelta
 from config.environment import ENV
+from dateutil.parser import parse as date_parse
+
 env = ENV()
 
 
@@ -151,4 +153,99 @@ class Utils:
 
         result = es_client.search(index=self.index_extracted, body=query, ignore=[404, 400])
         return {"status": True, "data": result['aggregations']}
+    
+
+    def convert_to_boolean(self, value):
+        if isinstance(value, bool):
+            return value
+        elif isinstance(value, str):
+            # Convert string representations of boolean values to boolean
+            if value.lower() in ['true', 't', 'yes', 'y', '1']:
+                return True
+            elif value.lower() in ['false', 'f', 'no', 'n', '0']:
+                return False
+        # Return False for other types or unrecognized string values
+        return False
+
+    async def filter_collection(self, body, collection) -> tuple:
+        query = {}
+        projection = {}
+        sort = []
+        or_query = []
+        
+        # Include fields
+        if body.include:
+            for field in body.include:
+                projection[field] = 1
+        
+        # Exclude fields
+        if body.exclude:
+            for field in body.exclude:
+                projection[field] = 0
+        
+        for filter_item in body.filter:
+            field = filter_item.field
+            filter_type = filter_item.type
+            operator = filter_item.operator
+            if filter_type == "term":
+                # query[field] = operator.eq
+                or_query.append({field: operator.eq})
+            elif filter_type == "bool":
+                # query[field] = operator.eq
+                or_query.append({field: self.convert_to_boolean(operator.eq)})
+            elif filter_type == "range":
+                range_query = {}
+                if operator.gte is not None:
+                    range_query["$gte"] = operator.gte
+                if operator.lte is not None:
+                    range_query["$lte"] = operator.lte
+                if operator.gt is not None:
+                    range_query["$gt"] = operator.gt
+                if operator.lt is not None:
+                    range_query["$lt"] = operator.lt
+                # query[field] = range_query
+                or_query.append({field: range_query})
+            elif filter_type == "wildcard":
+                wildcard_regex = ".*" + operator.like.replace("*", ".*") + ".*"
+                # query[field] = {"$regex": wildcard_regex}
+                or_query.append({field: {"$regex": wildcard_regex}})
+            elif filter_type == "datetime":
+                range_query = {}
+                if operator.gte is not None:
+                    range_query["$gte"] = date_parse(operator.gte)
+                if operator.lte is not None:
+                    range_query["$lte"] = date_parse(operator.lte)
+                if operator.gt is not None:
+                    range_query["$gt"] = date_parse(operator.gt)
+                if operator.lt is not None:
+                    range_query["$lt"] = date_parse(operator.lt)
+                or_query.append({field: range_query})
+
+        # Combine wildcard queries with $or operator
+        if or_query:
+            query["$and"] = or_query
+
+        # Sort criteria
+        for field, value in body.sort.items():
+            sort.append((field, value))
+
+        # Calculate pagination metadata
+        page_start = (body.page - 1) * body.pageSize
+        page_size = body.pageSize
+        total_hits = collection.count_documents(query)
+        page_count = (total_hits + page_size - 1) // page_size
+        # Fetch items from MongoDB based on the query and pagination
+        if sort:
+            items = collection.find(query, projection).sort(sort).skip(page_start).limit(page_size)
+        else:
+            items = collection.find(query, projection).skip(page_start).limit(page_size)
+          
+        pagination = {
+            "page": body.page,
+            "pageSize": body.pageSize,
+            "pageCount": page_count,
+            "total": total_hits
+        }
+
+        return items, pagination 
 

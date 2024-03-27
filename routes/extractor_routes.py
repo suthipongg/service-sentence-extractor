@@ -6,10 +6,12 @@ from schemas.extract_schema import extracts_serializer
 from controllers.extractor import SentenceExtractor
 from controllers.utils import Utils
 from config.security import get_token, UnauthorizedMessage
-from models.extract_model import ExtractorModel, CalendarInterval
-import pymongo
+from models.extract_model import ExtractorModel, CalendarInterval, BodyList
 import os, sys
 from config.apm_client import client
+from controllers.utils_pymongo import parse_sort_criteria, parse_filter_criteria, apply_sort
+from request_examples.get_list import getList
+from typing import Annotated
 
 
 
@@ -62,7 +64,6 @@ async def extractor(
         client.capture_exception()
         raise HTTPException(status_code=500, detail="Internal Server Error") from e  
     
-
 @extractor_model.get(
         "/extractor",
         responses={status.HTTP_401_UNAUTHORIZED: dict(model=UnauthorizedMessage)},
@@ -79,66 +80,65 @@ async def find_all_extracted(
         default="",
         description="Comma-separated list of fields to sort by (e.g., 'field1,-field2' for descending)",
     ),
+    filter: str = Query(
+        default="",
+        description="Filter criteria (e.g., 'field1:value1,field2:*value2*')",
+    ),
 ):
     try:
         if page_start < 1:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="page must be greater than or equal to 1",
+                status_code=400,
+                detail="Page must be greater than or equal to 1",
             )
-        
-        skip_count = (page_start - 1) * page_size  # Adjust for 1-based indexing
-        # Split the sort_by parameter into a list of sorting criteria
-        sort_criteria = []
-        if sort_by:
-            sort_fields = sort_by.split(",")
-            for field in sort_fields:
-                direction = pymongo.ASCENDING
-                if field.startswith('-'):
-                    direction = pymongo.DESCENDING
-                    field = field[1:]  # Remove the '-' prefix
-                sort_criteria.append((field, direction))
 
-    
-        # Query MongoDB with skip, limit, sort, and projection
-        extracted_cursor = extracted_collection.find({}).skip(skip_count).limit(page_size)
-        # Check if sort_criteria is empty (default sort behavior)
-        if not sort_criteria:
-            extracted_cursor = extracted_cursor.sort([("_id", pymongo.DESCENDING)])  # Sort by _id in descending order by default
+        skip_count = (page_start - 1) * page_size
+
+        # Parse the sort_by string into sorting criteria
+        sort_criteria = parse_sort_criteria(sort_by)
+
+        # Parse the filter string into filter criteria
+        if filter:
+            filter_criteria = {"$and":  parse_filter_criteria(filter)}
         else:
-            extracted_cursor = extracted_cursor.sort(sort_criteria)
+            filter_criteria = {}
+
+        # Query MongoDB with sorting and filtering
+        extracted_cursor = extracted_collection.find(filter_criteria)
+        # extracted_cursor = sentence_extracted_collection.find(filter_criteria)
+        extracted_cursor = apply_sort(extracted_cursor, sort_criteria)
+        extracted_cursor = extracted_cursor.skip(skip_count).limit(page_size)
+
         # Serialize the results
-        users = extracts_serializer(extracted_cursor)
+        extracted_list = extracts_serializer(extracted_cursor)
+
         # Exclude specified fields from the output
         if exclude_fields:
             exclude_fields = exclude_fields.split(",")
-            for user in users:
+            for doc in extracted_list:
                 for field in exclude_fields:
-                    user.pop(field, None)
+                    doc.pop(field, None)
+
         # Calculate pagination metadata
-        total_hits = extracted_collection.count_documents({})
-        page_count = (total_hits + page_size - 1) // page_size  # Calculate pageCount
-        page = page_start
-        # Create the pagination metadata dictionary
+        total_hits = extracted_collection.count_documents(filter_criteria)
+        # total_hits = sentence_extracted_collection.count_documents(filter_criteria)
+        page_count = (total_hits + page_size - 1) // page_size
         pagination = {
-            "page": page,
+            "page": page_start,
             "pageSize": page_size,
             "pageCount": page_count,
             "total": total_hits
         }
-        
-        return {"status": True, "data": users, "meta": {"pagination": pagination}}
-    except HTTPException as http_exception:
-        raise http_exception
-    except Exception as e:  
+
+        return {"status": True, "data": extracted_list, "meta": {"pagination": pagination}}
+    except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         print(exc_type, fname, exc_tb.tb_lineno)
         print(e)
         client.capture_exception()  
         raise HTTPException(status_code=500, detail="Internal Server Error") from e  
-
-
+    
 @extractor_model.get(
         "/extractor/report",
         responses={status.HTTP_401_UNAUTHORIZED: dict(model=UnauthorizedMessage)},
@@ -221,3 +221,30 @@ async def delete_extractor(
         print(e)
         client.capture_exception()
         raise HTTPException(status_code=500, detail="Internal Server Error") from e
+
+
+@extractor_model.post(
+        "/extractor/getList",
+        responses={status.HTTP_401_UNAUTHORIZED: dict(model=UnauthorizedMessage)},
+        )
+async def extractor_get_list(
+            body: Annotated[
+                    BodyList,
+                    Body(
+                        openapi_examples=getList
+                    )
+                ],
+            token_auth: str = Depends(get_token),
+        ):
+    try:
+        items, pagination = await utils.filter_collection(body, extracted_collection)
+        return {"status": True, "data": extracts_serializer(items), "meta": {"pagination": pagination}}
+    except HTTPException as http_exception:
+        raise http_exception
+    except Exception as e:  
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
+        print(e)
+        client.capture_exception()  
+        raise HTTPException(status_code=500, detail="Internal Server Error") from e  
