@@ -74,7 +74,8 @@ async def add_process_time_header(request: Request, call_next):
     return response
 
 
+from routes.tokenizer_routes import tokenizer_model
+app.include_router(tokenizer_model)
 
 from routes.extractor_routes import extractor_model
 app.include_router(extractor_model)
-

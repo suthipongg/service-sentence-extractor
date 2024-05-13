@@ -7,6 +7,9 @@ from elasticsearch.helpers import bulk
 from datetime import datetime, date, timedelta
 from config.environment import ENV
 from dateutil.parser import parse as date_parse
+from pythainlp.corpus import thai_stopwords
+from pythainlp.tokenize import word_tokenize
+import nltk
 
 env = ENV()
 
@@ -14,14 +17,22 @@ env = ENV()
 class Utils:
     def __init__(self):
         self.index_extracted = env.NAME_INDEX_EXTRACETED
+        self.intex_trainnlu = env.NAME_INDEX_TRAIN_NLU
+        self.index_trainnlu_tokenized = env.NAME_INDEX_TRAIN_NLU_TOKENIZED
+        self.index_tokenized = env.NAME_INDEX_TOKENIZED
 
         print('[START] Create Index EXTRACETED :::')
         self.create_index_es(self.index_extracted, es_model.extractMapping)
         print('[END] Create Index EXTRACETED :::')
+        print('[START] Create Index tokenized :::')
+        self.create_index_es(self.index_trainnlu_tokenized, es_model.tokenizedMapping)
+        print('[END] Create Index tokenized :::')
 
         # Get the current date as a string in ISO format with time set to 00:00:00 AM
         self.first_day, self.last_day = self.get_first_last_date_of_month()
         self.date_now_str = datetime.now().strftime('%d%m%Y')
+        self.stopwords = list(thai_stopwords())
+        
 
     def create_index_es(self, index_name, mapping):
         isIndex = es_client.indices.exists(index_name)
@@ -36,6 +47,11 @@ class Utils:
         next_month = first_day.replace(month=first_day.month % 12 + 1)
         last_day = next_month - timedelta(days=1)
         return first_day, last_day
+    
+    def remove_stop_word(self, text):
+        list_word = word_tokenize(text)
+        list_word_not_stopwords = [i for i in list_word if i not in self.stopwords]
+        return ''.join(list_word_not_stopwords)
     
     def bulk_extracted(self, datas):
         actions = []
@@ -248,4 +264,93 @@ class Utils:
         }
 
         return items, pagination 
+    
 
+    def bulk_trainnlu_tokenized(self, datas):
+        actions = []
+        for data in datas:
+            action = {
+                "_index": self.index_trainnlu_tokenized,
+                "_op_type": "index",  # Use "index" for indexing documents
+                "_id": data['id'],
+                "_source": data  # Your document data
+            }
+            actions.append(action)
+        success, failed = bulk(
+                        es_client,
+                        actions,
+                    )
+        print({"success": success, "failed":failed})
+        return {"success": success, "failed":failed}
+    
+    async def get_trainnlu_datas(self):
+        query = {
+            "_source": [
+            "id",
+            "message",
+            "method",
+            "action_send",
+            "prompt_id",
+            "keywords"
+            ],
+            "size": 10000,
+            "query": {
+                "bool": {
+                    "must": [
+                    {
+                        "term": {
+                        "active.keyword": {
+                            "value": "1"
+                        }
+                        }
+                    },
+                    {
+                        "term": {
+                        "level.keyword": {
+                            "value": "2"
+                        }
+                        }
+                    }
+                    ]
+                }
+            }
+        }
+
+        result = es_client.search(index=self.intex_trainnlu, body=query, ignore=[404, 400])
+
+        datas = []
+        for hit in result['hits']['hits']:
+            _source = hit['_source']
+            _keywords = ''
+            keywords:str = _source['keywords']
+            for keyword in keywords.split(','):
+                text = keyword.strip()
+                new_keyword = await self.ngrams(text)
+                new_keyword_list = new_keyword.split(' ')
+                _keywords += ','.join([r.strip() for r in new_keyword_list if r != ''])
+            _source['keywords'] = ','.join(list(set(_keywords.split(','))))
+            datas.append(_source)
+
+        await self.delete_all_document(self.index_trainnlu_tokenized)
+        return self.bulk_trainnlu_tokenized(datas)
+      
+
+    async def ngrams(self, text):
+        # Tokenize the input text
+        tokens = word_tokenize(text)
+
+        # Generate bigrams
+        bigrams = list(nltk.ngrams(tokens, 2))
+
+        # Append bigrams to the tokens list
+        tokens += [''.join(bigram) for bigram in bigrams]
+
+        return ' '.join(tokens)
+
+
+    async def delete_all_document(self, index_name):
+        query = {"query" : { 
+                "match_all" : {}
+            }}
+        result = es_client.delete_by_query(index_name, body=query)
+        print('delete_all_document ::: >>> ', result)

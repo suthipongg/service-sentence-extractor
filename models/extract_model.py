@@ -5,6 +5,7 @@ from enum import Enum
 
 class ExtractorModel(BaseModel):
     sentence: str = ''
+    sentence_original: str = ''
     # sentence_vector: List = None
     created_at: str = datetime.now()
     counter: int = 1
@@ -12,6 +13,7 @@ class ExtractorModel(BaseModel):
     def __init__(self, **data):
         super().__init__(**data)
         self.created_at = datetime.now()
+        self.sentence_original = self.sentence
 
     class Config:
         json_schema_extra = {

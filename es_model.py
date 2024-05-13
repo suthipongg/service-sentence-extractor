@@ -103,6 +103,26 @@ extractMapping = {
                     }
                 }
             },
+            "sentence_original": {
+                "type": "text",
+                "fields": {
+                    "trigram": {
+                        "type": "text",
+                        "analyzer": "trigram"
+                    },
+                    "keyword": {
+                        "type": "keyword"
+                    },
+                    "autocomplete": {
+                        "type": "text",
+                        "analyzer": "autocomplete",
+                        "search_analyzer": "standard",
+                    },
+                    "completion": {
+                        "type": "completion"
+                    }
+                }
+            },
             "sentence_vector": {
                 "type": "dense_vector",
                 "dims": 384
@@ -117,6 +137,151 @@ extractMapping = {
                         "type": "keyword"
                     }
                 }
+            }
+        }
+    }
+}
+
+tokenizedMapping = {
+    "settings": settingsMapping,
+    "mappings": {
+        "properties": {
+            "id": {
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
+            },
+            "method": {
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
+            },
+            "prompt_id": {
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
+            },
+            "active_context": {
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
+            },
+            "message": {
+                "type": "text",
+                "fields": {
+                    "trigram": {
+                        "type": "text",
+                        "analyzer": "trigram"
+                    },
+                    "keyword": {
+                        "type": "keyword"
+                    },
+                    "autocomplete": {
+                        "type": "text",
+                        "analyzer": "autocomplete",
+                        "search_analyzer": "standard",
+                    },
+                    "completion": {
+                        "type": "completion"
+                    }
+                }
+            },
+            "keyword": {
+                "type": "text",
+                "fields": {
+                    "trigram": {
+                        "type": "text",
+                        "analyzer": "trigram"
+                    },
+                    "keyword": {
+                        "type": "keyword"
+                    },
+                    "autocomplete": {
+                        "type": "text",
+                        "analyzer": "autocomplete",
+                        "search_analyzer": "standard",
+                    },
+                    "completion": {
+                        "type": "completion"
+                    }
+                }
+            },
+            "created_at" : {
+                "type" : "date"
+            },
+            "updated_at" : {
+                "type" : "date"
+            }
+        }
+    }
+}
+
+tokenizedLogsMapping = {
+    "settings": settingsMapping,
+    "mappings": {
+        "properties": {
+            "id": {
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
+            },
+            "text": {
+                "type": "text",
+                "fields": {
+                    "trigram": {
+                        "type": "text",
+                        "analyzer": "trigram"
+                    },
+                    "keyword": {
+                        "type": "keyword"
+                    },
+                    "autocomplete": {
+                        "type": "text",
+                        "analyzer": "autocomplete",
+                        "search_analyzer": "standard",
+                    },
+                    "completion": {
+                        "type": "completion"
+                    }
+                }
+            },
+            "text_tokenized": {
+                "type": "text",
+                "fields": {
+                    "trigram": {
+                        "type": "text",
+                        "analyzer": "trigram"
+                    },
+                    "keyword": {
+                        "type": "keyword"
+                    },
+                    "autocomplete": {
+                        "type": "text",
+                        "analyzer": "autocomplete",
+                        "search_analyzer": "standard",
+                    },
+                    "completion": {
+                        "type": "completion"
+                    }
+                }
+            },
+            "created_at" : {
+                "type" : "date"
             }
         }
     }

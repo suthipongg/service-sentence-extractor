@@ -14,7 +14,6 @@ from request_examples.get_list import getList
 from typing import Annotated
 
 
-
 print('Sentence Extractor Loading :::')
 st = SentenceExtractor()
 print('Sentence Extractor Start :::')
@@ -33,6 +32,9 @@ async def extractor(
 ):
     try:
         if body.sentence:
+            print("sentence :: >>> ", body.sentence)
+            print("remove stop word : >>>>> ", utils.remove_stop_word(body.sentence))
+            # body.sentence = utils.remove_stop_word(body.sentence)
             result = utils.get_sentence(sentence=body.sentence)
             if result['is_exist']:
                 background_tasks.add_task(extracted_collection.update_one, filter = {
