@@ -16,12 +16,12 @@ class SentenceExtractor:
         # MODEL_NAME = 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2'
         MODEL_NAME = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
         MODEL_PATH = './model_ai'
-        word_embedding_model = models.Transformer(model_name_or_path=MODEL_NAME, max_seq_length=32)
+        word_embedding_model = models.Transformer(model_name_or_path=MODEL_NAME)
         pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension(),pooling_mode='cls') # We use a [CLS] token as representation
         self.model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
         # self.model.save('/Users/nawaphongyoochum/Learn-Python/chatbot-deployment/model')
 
-        self.tokenizer1 = AutoTokenizer.from_pretrained(pretrained_model_name_or_path=MODEL_PATH)
+        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path=MODEL_PATH)
 
 
     def extract(self, list_text):

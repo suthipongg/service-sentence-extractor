@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 
 class ExtractorModel(BaseModel):
-    sentence: str = ''
+    sentence: Union[str, list] = ''
     sentence_original: str = ''
     # sentence_vector: List = None
     created_at: str = datetime.now()
@@ -22,6 +22,21 @@ class ExtractorModel(BaseModel):
             }
         }
     
+class ExtractoListrModel(BaseModel):
+    sentences: Union[str, list] = ''
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        if isinstance(self.sentences, str):
+            self.sentences = [self.sentences]
+            
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "sentences": ["Example Text"],
+            }
+        }
+
 
 class CalendarInterval(str, Enum):
     # minute = "minute"

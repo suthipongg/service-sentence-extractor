@@ -6,7 +6,7 @@ from schemas.extract_schema import extracts_serializer
 from controllers.extractor import SentenceExtractor
 from controllers.utils import Utils
 from config.security import get_token, UnauthorizedMessage
-from models.extract_model import ExtractorModel, CalendarInterval, BodyList
+from models.extract_model import ExtractorModel, CalendarInterval, BodyList, ExtractoListrModel
 import os, sys
 from config.apm_client import client
 from controllers.utils_pymongo import parse_sort_criteria, parse_filter_criteria, apply_sort
@@ -32,26 +32,22 @@ async def extractor(
 ):
     try:
         if body.sentence:
-            print("sentence :: >>> ", body.sentence)
-            print("remove stop word : >>>>> ", utils.remove_stop_word(body.sentence))
-            # body.sentence = utils.remove_stop_word(body.sentence)
-            result = utils.get_sentence(sentence=body.sentence)
-            if result['is_exist']:
+            sentence_vector = await embedded_model(body=body)
+            if sentence_vector['is_exist']:
                 background_tasks.add_task(extracted_collection.update_one, filter = {
-                    "_id": ObjectId(result['result']['id'])
+                    "_id": ObjectId(sentence_vector['result']['id'])
                 }, 
                 update = {
-                    "$set": {"counter": result['result']['counter'] + 1}
+                    "$set": {"counter": sentence_vector['result']['counter'] + 1}
                 })
-                background_tasks.add_task(utils.update_counter_extracted, _id=result['result']['id'])
-                return result['result']
+                background_tasks.add_task(utils.update_counter_extracted, _id=sentence_vector['result']['id'])
+                return sentence_vector['result']
             _id = extracted_collection.insert_one({**body.dict()})
             extracted = extracted_collection.find_one({"_id": _id.inserted_id})
-            sentence_vector = st.extract(body.sentence).tolist()
-            extracted = {**extracted, "sentence_vector": sentence_vector}
+            extracted = {**extracted, "sentence_vector": sentence_vector['sentence_vector']}
             # Convert _id to string
             extracted = {'id' if k == '_id' else k: str(v) if k == '_id' else v for k, v in extracted.items()}
-
+            print("extracted :: >>> ", extracted)
             background_tasks.add_task(utils.bulk_extracted, datas=[extracted])
             return extracted
         else:
@@ -65,7 +61,53 @@ async def extractor(
         print(e)
         client.capture_exception()
         raise HTTPException(status_code=500, detail="Internal Server Error") from e  
-    
+
+@extractor_model.post(
+        "/extractor/model",
+        responses={status.HTTP_401_UNAUTHORIZED: dict(model=UnauthorizedMessage)},
+        )
+async def embedded_model(
+    body: ExtractorModel,
+    token_auth: str = Depends(get_token),
+):
+    try:
+        result = utils.get_sentence(sentence=body.sentence)
+        if result['is_exist']:
+            return result
+        sentence_vector = st.extract(body.sentence).tolist()
+        return {"is_exist": False, "sentence_vector": sentence_vector}
+    except HTTPException as http_exception:
+        raise http_exception
+    except Exception as e:  
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
+        print(e)
+        client.capture_exception()
+        raise HTTPException(status_code=500, detail="Internal Server Error") from e  
+
+@extractor_model.post(
+        "/extractor/tokenizer/counter",
+        responses={status.HTTP_401_UNAUTHORIZED: dict(model=UnauthorizedMessage)},
+        )
+async def tokenizer_counter(
+    body: ExtractoListrModel,
+    token_auth: str = Depends(get_token),
+):
+    try:
+        counts = [len(tk) for tk in st.tokenizer(body.sentences)["input_ids"]]
+        return {"success": True, "token_count": counts}
+    except HTTPException as http_exception:
+        raise http_exception
+    except Exception as e:  
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
+        print(e)
+        client.capture_exception()
+        raise HTTPException(status_code=500, detail="Internal Server Error") from e  
+
+
 @extractor_model.get(
         "/extractor",
         responses={status.HTTP_401_UNAUTHORIZED: dict(model=UnauthorizedMessage)},
