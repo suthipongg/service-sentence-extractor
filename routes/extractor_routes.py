@@ -6,7 +6,7 @@ from schemas.extract_schema import extracts_serializer
 from controllers.extractor import SentenceExtractor
 from controllers.utils import Utils
 from config.security import get_token, UnauthorizedMessage
-from models.extract_model import ExtractorModel, CalendarInterval, BodyList, ExtractoListrModel
+from models.extract_model import ExtractorModel, CalendarInterval, BodyList, ExtractorListModel
 import os, sys
 from config.apm_client import client
 from controllers.utils_pymongo import parse_sort_criteria, parse_filter_criteria, apply_sort
@@ -95,7 +95,7 @@ async def embedded_model(
         responses={status.HTTP_401_UNAUTHORIZED: dict(model=UnauthorizedMessage)},
         )
 async def tokenizer_counter(
-    body: ExtractoListrModel,
+    body: ExtractorListModel,
     token_auth: str = Depends(get_token),
 ):
     try:

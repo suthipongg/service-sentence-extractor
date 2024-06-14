@@ -22,7 +22,7 @@ class ExtractorModel(BaseModel):
             }
         }
     
-class ExtractoListrModel(BaseModel):
+class ExtractorListModel(BaseModel):
     sentences: Union[str, list] = ''
 
     def __init__(self, **data):
