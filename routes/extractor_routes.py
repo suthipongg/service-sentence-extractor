@@ -90,6 +90,26 @@ async def embedded_model(
         client.capture_exception()
         raise HTTPException(status_code=500, detail="Internal Server Error") from e  
 
+@extractor_model.get(
+        "/extractor/model/warmup",
+        responses={status.HTTP_401_UNAUTHORIZED: dict(model=UnauthorizedMessage)},
+        )
+async def embedded_model_warmup(
+    token_auth: str = Depends(get_token),
+):
+    try:
+        st.extract('สวัสดีครับ')
+        return {"message": "success"}
+    except HTTPException as http_exception:
+        raise http_exception
+    except Exception as e:  
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
+        print(e)
+        client.capture_exception()
+        raise HTTPException(status_code=500, detail="Internal Server Error") from e  
+
 @extractor_model.post(
         "/extractor/tokenizer/counter",
         responses={status.HTTP_401_UNAUTHORIZED: dict(model=UnauthorizedMessage)},
