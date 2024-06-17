@@ -47,11 +47,7 @@ async def extractor(
             extracted = {**extracted, "sentence_vector": sentence_vector['sentence_vector']}
             # Convert _id to string
             extracted = {'id' if k == '_id' else k: str(v) if k == '_id' else v for k, v in extracted.items()}
-            n_exam = 2
-            show_extracted = extracted.copy()
-            if len(show_extracted['sentence_vector']) > (n_exam*2):
-                show_extracted['sentence_vector'] = f"{str(show_extracted['sentence_vector'][:n_exam])[:-1]}, ..., {str(show_extracted['sentence_vector'][-n_exam:])[1:]}" 
-            print("extracted :: >>> ", show_extracted)
+
             background_tasks.add_task(utils.bulk_extracted, datas=[extracted])
             return extracted
         else:

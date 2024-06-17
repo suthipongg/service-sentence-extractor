@@ -19,7 +19,7 @@ ALLOWED_ORIGINS = ['*']
 # app = FastAPI(
 #     title="Project Chat AI: Sentence Extractor API (2023)", 
 #     description=f"Created by zax \n TNT Media and Network Co., Ltd. \n Started at {datetime.datetime.now().strftime('%c')}", 
-#     root_path="/llm", 
+#     root_path="/extractor", 
 #     docs_url="/",
 #     version="1.0.0",
 # )
@@ -79,3 +79,4 @@ app.include_router(tokenizer_model)
 
 from routes.extractor_routes import extractor_model
 app.include_router(extractor_model)
+

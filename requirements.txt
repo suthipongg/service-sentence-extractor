@@ -34,7 +34,6 @@ psutil==5.9.5
 pydantic==2.3.0
 pydantic_core==2.6.3
 pymongo==4.5.0
-pythainlp==5.0.2
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.0
 python-multipart==0.0.6
@@ -66,3 +65,4 @@ watchfiles==0.20.0
 websockets==11.0.3
 wrapt==1.15.0
 yarl==1.9.2
+pythainlp==5.0.2

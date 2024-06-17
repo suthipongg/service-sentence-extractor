@@ -7,7 +7,6 @@ from elasticsearch.helpers import bulk
 from datetime import datetime, date, timedelta
 from config.environment import ENV
 from dateutil.parser import parse as date_parse
-from pythainlp.corpus import thai_stopwords
 from pythainlp.tokenize import word_tokenize
 import nltk
 
@@ -19,7 +18,6 @@ class Utils:
         self.index_extracted = env.NAME_INDEX_EXTRACETED
         self.intex_trainnlu = env.NAME_INDEX_TRAIN_NLU
         self.index_trainnlu_tokenized = env.NAME_INDEX_TRAIN_NLU_TOKENIZED
-        self.index_tokenized = env.NAME_INDEX_TOKENIZED
 
         print('[START] Create Index EXTRACETED :::')
         self.create_index_es(self.index_extracted, es_model.extractMapping)
@@ -31,8 +29,6 @@ class Utils:
         # Get the current date as a string in ISO format with time set to 00:00:00 AM
         self.first_day, self.last_day = self.get_first_last_date_of_month()
         self.date_now_str = datetime.now().strftime('%d%m%Y')
-        self.stopwords = list(thai_stopwords())
-        
 
     def create_index_es(self, index_name, mapping):
         isIndex = es_client.indices.exists(index_name)
@@ -47,11 +43,6 @@ class Utils:
         next_month = first_day.replace(month=first_day.month % 12 + 1)
         last_day = next_month - timedelta(days=1)
         return first_day, last_day
-    
-    def remove_stop_word(self, text):
-        list_word = word_tokenize(text)
-        list_word_not_stopwords = [i for i in list_word if i not in self.stopwords]
-        return ''.join(list_word_not_stopwords)
     
     def bulk_extracted(self, datas):
         actions = []
@@ -265,6 +256,7 @@ class Utils:
 
         return items, pagination 
     
+        
 
     def bulk_trainnlu_tokenized(self, datas):
         actions = []
@@ -330,7 +322,7 @@ class Utils:
                 _keywords += ','.join([r.strip() for r in new_keyword_list if r != ''])
             _source['keywords'] = ','.join(list(set(_keywords.split(','))))
             datas.append(_source)
-
+            
         await self.delete_all_document(self.index_trainnlu_tokenized)
         return self.bulk_trainnlu_tokenized(datas)
       
@@ -346,7 +338,7 @@ class Utils:
         tokens += [''.join(bigram) for bigram in bigrams]
 
         return ' '.join(tokens)
-
+    
 
     async def delete_all_document(self, index_name):
         query = {"query" : { 
@@ -354,3 +346,6 @@ class Utils:
             }}
         result = es_client.delete_by_query(index_name, body=query)
         print('delete_all_document ::: >>> ', result)
+
+
+
