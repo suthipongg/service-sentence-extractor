@@ -1,4 +1,4 @@
-print('strat project chat bot Sentence Extractor ::: ')
+print('start project chat bot Sentence Extractor ::: ')
 from fastapi import FastAPI, Request
 import time
 import datetime
