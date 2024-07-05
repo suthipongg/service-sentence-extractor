@@ -19,7 +19,6 @@
 - [Running the tests](#tests)
 - [Deployment](#deployment)
 - [Usage](#usage)
-- [Built Using](#built_using)
 - [Authors](#authors)
 - [VERSION](#version)
 
@@ -53,8 +52,8 @@ Make sure you have the following software installed:
 ### Multilingual Models
 Models | Dimensions | Size(MB) | Suitable Score Functions | Speed(sentence/sec in V100) | Performance Semantic Search(Higher=Better)
 ---|---|---|---|---|---
+[paraphrase-multilingual-MiniLM-L12-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2) (Recommended)| 384 | 420 | cosine-similarity | 7500 | 39.19
 [paraphrase-multilingual-mpnet-base-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-mpnet-base-v2) | 768 | 970 | cosine-similarity | 2500 | 41.68
-[paraphrase-multilingual-MiniLM-L12-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2) | 384 | 420 | cosine-similarity | 7500 | 39.19
 
 ### Installation
 
@@ -145,15 +144,6 @@ This section provides clear instructions for running the UVicorn servers for thi
 5. **Build and Install**: Build your project and install any required dependencies using the appropriate package manager (e.g., pip for Python projects). You may also need to compile any frontend assets if applicable.
 
 6. **Run Servers**: Start the necessary servers for your project, such as UVicorn for running your web application and any other backend services (e.g., Elasticsearch, MongoDB, Redis).
-
-## ⛏️ Built Using <a name = "built_using"></a>
-
-This project is built using the following technologies:
-
-- [Python](https://www.python.org/) - Programming language
-- [FastAPI](https://fastapi.tiangolo.com/) - Web framework for building APIs with Python
-
-These technologies were chosen for their performance, scalability, and ease of use, enabling us to build a robust and efficient system for our project.
 
 <details>
 <summary>Version</summary>
