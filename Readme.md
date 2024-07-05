@@ -150,7 +150,7 @@ This section provides clear instructions for running the UVicorn servers for thi
 
 # Version History
 
-## [0.0.0] (2024-07-01)
+## [0.0.0] (2024-07-05)
 
 - Release date: July 5, 2024
 
