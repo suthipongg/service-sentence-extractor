@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, status, HTTPException, Depends
+from fastapi import APIRouter, status, HTTPException, Depends
 from config.security import get_token, UnauthorizedMessage
 import os, sys
 from config.apm_client import client

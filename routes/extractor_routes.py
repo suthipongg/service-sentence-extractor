@@ -19,7 +19,7 @@ st = SentenceExtractor()
 print('Sentence Extractor Start :::')
 
 utils = Utils()
-extractor_model = APIRouter(tags=["SentenceE Extractor"])
+extractor_model = APIRouter(tags=["Sentence Extractor"])
 
 @extractor_model.post(
         "/extractor",
@@ -43,13 +43,11 @@ async def extractor(
                 background_tasks.add_task(utils.update_counter_extracted, _id=sentence_vector['result']['id'])
                 return sentence_vector['result']
             _id = extracted_collection.insert_one({**body.dict()})
-            extracted = extracted_collection.find_one({"_id": _id.inserted_id})
-            extracted = {**extracted, "sentence_vector": sentence_vector['sentence_vector']}
-            # Convert _id to string
-            extracted = {'id' if k == '_id' else k: str(v) if k == '_id' else v for k, v in extracted.items()}
-
-            background_tasks.add_task(utils.bulk_extracted, datas=[extracted])
-            return extracted
+            body = body.model_dump()
+            body['sentence_vector'] = sentence_vector['sentence_vector']
+            body['id'] = str(_id.inserted_id)
+            utils.bulk_extracted([body])
+            return body
         else:
             raise HTTPException(status_code=400, detail="sentence not provided.")
     except HTTPException as http_exception:
@@ -272,8 +270,8 @@ async def delete_extractor(
     token_auth: str = Depends(get_token)
     ):
     try:
-        background_tasks.add_task(extracted_collection.delete_one, filter={"_id": ObjectId(id)})
-        background_tasks.add_task(utils.delete_extracted, _id=id)
+        extracted_collection.delete_one(filter={"_id": ObjectId(id)})
+        utils.delete_extracted(_id=id)
 
         return {"status": True, "data": {}}
     except HTTPException as http_exception:

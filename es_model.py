@@ -103,26 +103,6 @@ extractMapping = {
                     }
                 }
             },
-            "sentence_original": {
-                "type": "text",
-                "fields": {
-                    "trigram": {
-                        "type": "text",
-                        "analyzer": "trigram"
-                    },
-                    "keyword": {
-                        "type": "keyword"
-                    },
-                    "autocomplete": {
-                        "type": "text",
-                        "analyzer": "autocomplete",
-                        "search_analyzer": "standard",
-                    },
-                    "completion": {
-                        "type": "completion"
-                    }
-                }
-            },
             "sentence_vector": {
                 "type": "dense_vector",
                 "dims": 384
