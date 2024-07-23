@@ -6,7 +6,7 @@ from enum import Enum
 class ExtractorModel(BaseModel):
     sentence: Union[str, list] = ''
     # sentence_vector: List = None
-    created_at: str = datetime.now()
+    created_at: datetime = None
     counter: int = 1
 
     def __init__(self, **data):

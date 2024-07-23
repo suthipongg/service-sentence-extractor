@@ -150,6 +150,12 @@ This section provides clear instructions for running the UVicorn servers for thi
 
 # Version History
 
+## [0.0.1] (2024-07-23)
+### Added
+- GPU usage condition.
+### Fixed
+- Pydantic model type issue: now uses `datetime`.
+
 ## [0.0.0] (2024-07-05)
 ### Added
 - Initial release of the project.

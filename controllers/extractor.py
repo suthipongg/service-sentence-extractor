@@ -4,6 +4,7 @@ from sentence_transformers import models #losses
 # from torch.utils.data import DataLoader
 import numpy as np
 import os
+import torch
 
 from transformers import AutoTokenizer
 
@@ -19,6 +20,7 @@ class SentenceExtractor:
         word_embedding_model = models.Transformer(model_name_or_path=MODEL_NAME)
         pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension(),pooling_mode='cls') # We use a [CLS] token as representation
         self.model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
+        self.model = self.model.to('cuda') if torch.cuda.is_available() else self.model
         # self.model.save('/Users/nawaphongyoochum/Learn-Python/chatbot-deployment/model')
 
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path=MODEL_PATH)

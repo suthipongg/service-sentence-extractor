@@ -3,7 +3,7 @@ from datetime import datetime
 
 class TokenizerModel(BaseModel):
     text: str = ''
-    created_at: str = datetime.now()
+    created_at: datetime = None
 
     def __init__(self, **data):
         super().__init__(**data)
