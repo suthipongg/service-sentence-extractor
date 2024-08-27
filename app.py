@@ -74,6 +74,12 @@ async def add_process_time_header(request: Request, call_next):
     response.headers["X-Process-Time"] = "{0:.2f}ms".format(process_time)
     return response
 
+from config.db import (
+    check_elasticsearch_connection, 
+    check_mongo_connection,
+)
+check_elasticsearch_connection()
+check_mongo_connection()
 
 from routes.tokenizer_routes import tokenizer_model
 app.include_router(tokenizer_model)
