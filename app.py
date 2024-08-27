@@ -10,7 +10,8 @@ from starlette.requests import Request
 from elasticapm.utils.disttracing import TraceParent
 from config.apm_client import client
 from fastapi.middleware.cors import CORSMiddleware
-
+from dotenv import load_dotenv
+load_dotenv('config/.env.shared')
 
 ALLOWED_ORIGINS = ['*']
 

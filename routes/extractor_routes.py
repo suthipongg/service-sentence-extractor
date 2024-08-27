@@ -72,7 +72,7 @@ async def embedded_model(
         result = utils.get_sentence(sentence=body.sentence)
         if result['is_exist']:
             return result
-        sentence_vector = st.extract(body.sentence).tolist()
+        sentence_vector = st.extract(body.sentence)
         return {"is_exist": False, "sentence_vector": sentence_vector}
     except HTTPException as http_exception:
         raise http_exception
