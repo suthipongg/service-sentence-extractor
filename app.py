@@ -87,3 +87,5 @@ app.include_router(tokenizer_model)
 from routes.extractor_routes import extractor_model
 app.include_router(extractor_model)
 
+from routes.setting_route import setting_route
+app.include_router(setting_route)

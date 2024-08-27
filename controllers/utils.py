@@ -1,7 +1,7 @@
 import json
 import random
 import string
-import es_model
+import config.es_model as es_model
 from config.db import es_client
 from elasticsearch.helpers import bulk
 from datetime import datetime, date, timedelta
