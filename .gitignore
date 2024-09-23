@@ -163,3 +163,4 @@ environment.py
 *.rdb
 .DS_Store
 model_ai/models/*/
+.coverage*

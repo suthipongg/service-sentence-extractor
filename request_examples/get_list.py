@@ -1,7 +1,3 @@
-from datetime import datetime
-import random
-import string
-
 getList = {
     "normal": {
         "summary": "A normal example",

@@ -65,7 +65,10 @@ watchfiles==0.20.0
 websockets==11.0.3
 wrapt==1.15.0
 yarl==1.9.2
-pythainlp
+pytest==8.3.2
+pytest-xdist==3.6.1
+pytest-ordering==0.6
+httpx==0.26.0
 wheel
 optimum
 onnx
