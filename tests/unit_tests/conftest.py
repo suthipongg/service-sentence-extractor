@@ -1,8 +1,14 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from configs.logger import LoggerConfig
 from configs.db import ElasticsearchConnection
+from configs.config import SettingsManager
+
+@pytest.fixture(scope='function')
+def mock_settings_manager():
+    with patch.object(SettingsManager, 'settings') as mock:
+        yield mock
 
 @pytest.fixture(scope="function")
 def mock_logger_info():

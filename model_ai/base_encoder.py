@@ -1,10 +1,10 @@
 import torch
 from typing import List, Union
-from configs.environment import ENV
+from configs.config import SettingsManager
 
 class BaseEncoder:
     def __init__(self):
-        self.device = ENV.DEVICE if torch.cuda.is_available() else 'cpu'
+        self.device = SettingsManager.settings.device if torch.cuda.is_available() else 'cpu'
         self.model_name = None
         self.model = None
         self.tokenizer = None

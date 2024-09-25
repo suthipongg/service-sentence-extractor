@@ -164,3 +164,4 @@ environment.py
 .DS_Store
 model_ai/models/*/
 .coverage*
+.env.prod

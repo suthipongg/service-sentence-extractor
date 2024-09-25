@@ -2,7 +2,7 @@ import os
 import importlib
 
 from configs.logger import LoggerConfig
-from configs.environment import ENV
+from configs.config import SettingsManager
 
 # Disabling parallelism to avoid deadlocks
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -32,7 +32,7 @@ class SentenceExtractor:
         return False
 
     def _initialize(self):
-        EmbeddingModel = importlib.import_module(f"model_ai.{ENV.MODEL_NAME}").EmbeddingModel
+        EmbeddingModel = importlib.import_module(f"model_ai.{SettingsManager.settings.model_name}").EmbeddingModel
         self.model = EmbeddingModel()
 
     def extract(self, list_text):

@@ -14,6 +14,12 @@ from configs.middleware import log_all_request_middleware
 
 LoggerConfig.logger.info('\033[92mStart project chat bot Sentence Extractor\033[0m ::: ')
 
+from configs.config import SettingsManager
+SettingsManager.initialize()
+
+from configs.es_model import ElasticsearchIndexConfigs
+ElasticsearchIndexConfigs()
+
 from configs.db import (
     MongoDBConnection, MGCollection,
     ElasticsearchConnection, ESIndex

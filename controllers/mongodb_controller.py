@@ -4,8 +4,7 @@ from configs.db import MongoDBConnection
 
 
 class MongoDBCRUD(MongoDBConnection):
-    def __init__(self):
-        super().__init__()
+    pass
 
 
 class MGFuncs(MongoDBCRUD):

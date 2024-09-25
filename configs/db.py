@@ -5,11 +5,11 @@ from pymongo import MongoClient
 from elasticsearch import Elasticsearch
 from elasticapm import Client as ApmClient
 
-from configs.environment import ENV
+from configs.config import SettingsManager
 from configs.es_model import ElasticsearchIndexConfigs
 from configs.logger import LoggerConfig
 
-class MongoDBConnection:
+class MongoDBConnection(SettingsManager):
     mongo_client = None
 
     def __new__(cls):
@@ -19,10 +19,10 @@ class MongoDBConnection:
     @classmethod
     def connect_mongodb(cls):
         if cls.mongo_client is None:
-            mongodb_uri = f"{ENV.MONGODB_HOST}:{int(ENV.MONGODB_PORT)}/{ENV.MONGODB_DB}"
-            use_authentication = ENV.MONGODB_USER and ENV.MONGODB_PASSWORD
+            mongodb_uri = f"{cls.settings.mongodb_host}:{int(cls.settings.mongodb_port)}/{cls.settings.mongodb_db}"
+            use_authentication = cls.settings.mongodb_user and cls.settings.mongodb_password
             if use_authentication:
-                mongodb_uri = f"{urllib.parse.quote_plus(ENV.MONGODB_USER)}:{urllib.parse.quote_plus(ENV.MONGODB_PASSWORD)}@" + mongodb_uri
+                mongodb_uri = f"{urllib.parse.quote_plus(cls.settings.mongodb_user)}:{urllib.parse.quote_plus(cls.settings.mongodb_password)}@" + mongodb_uri
             mongodb_uri = "mongodb://" + mongodb_uri
 
             cls.mongo_client = MongoClient(mongodb_uri)
@@ -39,7 +39,7 @@ class MongoDBConnection:
             LoggerConfig.logger.info(f"\033[91mFailed\033[0m to connect to [\033[96mMongoDB\033[0m]: {e}")
             return False
 
-class MGCollection:
+class MGCollection(SettingsManager):
     start_collection = None
 
     def __new__(cls) -> None:
@@ -49,20 +49,20 @@ class MGCollection:
     @classmethod
     def init_collection(cls):
         if cls.start_collection is None:
-            mongo_connect = MongoDBConnection()
-            mongo_db = mongo_connect.mongo_client[ENV.MONGODB_DB]
-            suffix_collection = '_COLLECTION_NAME'
-            for variable_name, value in vars(ENV).items():
-                is_collection_name_variable = not callable(value) and not variable_name.startswith('__') and suffix_collection in variable_name
+            mongo_client = MongoDBConnection.connect_mongodb()
+            mongo_db = mongo_client[cls.settings.mongodb_db]
+            suffix_collection = '_collection_name'
+            for variable_name, value in cls.settings.model_dump().items():
+                is_collection_name_variable = not callable(value) and not variable_name.startswith('__') and suffix_collection in variable_name.lower()
                 if is_collection_name_variable:
-                    variable_name = variable_name.split(suffix_collection)[0]
+                    variable_name = variable_name.lower().split(suffix_collection)[0].upper()
                     collection = mongo_db[value]
                     setattr(cls, variable_name, collection)
             cls.start_collection = True
         return cls.start_collection
 
 
-class ElasticsearchConnection:
+class ElasticsearchConnection(SettingsManager):
     apm_client = None
     es_client = None
 
@@ -75,15 +75,15 @@ class ElasticsearchConnection:
     def connect_elasticsearch(cls):
         if cls.es_client is None:
             es_config = {
-                "host": ENV.ES_HOST,
-                "port": int(ENV.ES_PORT),
-                "api_version": ENV.ES_VERSION,
+                "host": cls.settings.es_host,
+                "port": cls.settings.es_port,
+                "api_version": cls.settings.es_version,
                 "timeout": 60 * 60,
                 "use_ssl": False
             }
-            use_authentication = ENV.ES_USER and ENV.ES_PASSWORD
+            use_authentication = cls.settings.es_user and cls.settings.es_password
             if use_authentication:
-                es_config["http_auth"] = (ENV.ES_USER, ENV.ES_PASSWORD)
+                es_config["http_auth"] = (cls.settings.es_user, cls.settings.es_password)
 
             cls.es_client = Elasticsearch(**es_config)
             cls.check_elasticsearch_connection()
@@ -108,9 +108,9 @@ class ElasticsearchConnection:
         if cls.apm_client is None:
             LoggerConfig.logger.info("Initializing APM client...")
             cls.apm_client = ApmClient({
-                'SERVICE_NAME': ENV.APM_SERVICE_NAME,
-                'ENVIRONMENT': ENV.APM_ENVIRONMENT,
-                'SERVER_URL': ENV.APM_SERVER_URL
+                'SERVICE_NAME': cls.settings.apm_service_name,
+                'ENVIRONMENT': cls.settings.apm_environment,
+                'SERVER_URL': cls.settings.apm_server_url
             })
             cls.check_apm_connection()
         else:
@@ -121,7 +121,7 @@ class ElasticsearchConnection:
     @classmethod
     def check_apm_connection(cls):
         try:
-            if requests.get(f"{ENV.APM_SERVER_URL}/", timeout=1).status_code == 200:
+            if requests.get(f"{cls.settings.apm_server_url}/", timeout=1).status_code == 200:
                 LoggerConfig.logger.info("::: [\033[96mAPM\033[0m] connected \033[92msuccessfully\033[0m. :::")
                 return True
             else:
@@ -143,7 +143,7 @@ class ElasticsearchConnection:
         LoggerConfig.logger.info("Exception captured in APM client.")
 
 
-class ESIndex:
+class ESIndex(SettingsManager, ElasticsearchIndexConfigs):
     all_index_name = {}
     all_index_config = {}
 
@@ -155,18 +155,18 @@ class ESIndex:
     def init_index(cls):
         not_started_index = not cls.all_index_name or not cls.all_index_config
         if not_started_index:
-            suffix_index = '_INDEX_NAME'
-            for variable_name, value in vars(ENV).items():
-                is_index_name_variable = not callable(value) and not variable_name.startswith('__') and suffix_index in variable_name
+            suffix_index = '_index_name'
+            for variable_name, value in cls.settings.model_dump().items():
+                is_index_name_variable = not callable(value) and not variable_name.startswith('__') and suffix_index in variable_name.lower()
                 if is_index_name_variable:
-                    variable_name = variable_name.split(suffix_index)[0]
+                    variable_name = variable_name.lower().split(suffix_index)[0].upper()
                     setattr(cls, variable_name, value)
                     cls.all_index_name[variable_name] = value
 
-            suffix_config = '_CONFIG'
+            suffix_config = '_config'
             for variable_name, value in vars(ElasticsearchIndexConfigs).items():
-                is_config_name_variable = not callable(value) and not variable_name.startswith('__') and suffix_config in variable_name
+                is_config_name_variable = not callable(value) and not variable_name.startswith('__') and suffix_config in variable_name.lower()
                 if is_config_name_variable:
-                    variable_name = variable_name.split(suffix_config)[0]
+                    variable_name = variable_name.lower().split(suffix_config)[0].upper()
                     cls.all_index_config[variable_name] = value
         return cls.all_index_name, cls.all_index_config

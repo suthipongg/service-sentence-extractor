@@ -9,7 +9,7 @@ import numpy as np
 from pathlib import Path
 import os
 
-from configs.environment import ENV
+from configs.config import SettingsManager
 from configs.logger import LoggerConfig
 from model_ai.base_encoder import BaseEncoder
 
@@ -32,7 +32,7 @@ class EmbeddingModel(BaseEncoder):
             self.model_name = snapshot_download(repo_id=self.model_name, cache_dir=cache_folder, ignore_patterns=['flax_model.msgpack', 'rust_model.ot', 'tf_model.h5'])
 
         self.model = ORTModelForFeatureExtraction.from_pretrained(
-            f"{str(Path().resolve())}/model_ai/models/{ENV.MODEL_FILE_NAME}",
+            f"{str(Path().resolve())}/model_ai/models/{SettingsManager.settings.model_file_name}",
             use_io_binding=self.device!='cpu'
         ).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)

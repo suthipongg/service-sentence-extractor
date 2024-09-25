@@ -1,16 +1,16 @@
 from unittest.mock import patch, MagicMock
 
 from configs.db import ElasticsearchConnection, ESIndex
+from configs.config import SettingsManager
 
 
-
-class MockENVConnect:
-    ES_PORT = 9200
-    ES_HOST = 'localhost'
-    ES_VERSION = '7.10.2'
-    ES_USER = ''
-    ES_PASSWORD = ''
-@patch('configs.db.ENV', MockENVConnect)
+class MockESSetting:
+    es_host = 'localhost'
+    es_port = 9200
+    es_version = '7.10.2'
+    es_user = ''
+    es_password = ''
+@patch.object(SettingsManager, 'settings', MockESSetting)
 def test_connect_elasticsearch(mock_es_client):
     ElasticsearchConnection.es_client = None
     es_client = ElasticsearchConnection.connect_elasticsearch()
@@ -25,13 +25,14 @@ def test_connect_elasticsearch(mock_es_client):
     )
     mock_es_client.return_value.ping.assert_called_once()
 
-class MockENVConnectUser:
-    ES_PORT = 9200
-    ES_HOST = 'localhost'
-    ES_VERSION = '7.10.2'
-    ES_USER = 'user'
-    ES_PASSWORD = 'pass'
-@patch('configs.db.ENV', MockENVConnectUser)
+
+class MockESSetting:
+    es_host = 'localhost'
+    es_port = 9200
+    es_version = '7.10.2'
+    es_user = 'user'
+    es_password = 'pass'
+@patch.object(SettingsManager, 'settings', MockESSetting)
 def test_connect_elasticsearch_with_user(mock_es_client):
     ElasticsearchConnection.es_client = None
     es_client = ElasticsearchConnection.connect_elasticsearch()
@@ -81,12 +82,12 @@ def test_check_elasticsearch_connection_exception(mock_es_client, mock_logger_in
     mock_es_instance.ping.assert_called_once()
 
 
-class MockENVAPM:
-    APM_SERVICE_NAME = 'test_service'
-    APM_ENVIRONMENT = 'test_env'
-    APM_SERVER_URL = 'http://localhost'
+class MockAPMSetting:
+    apm_service_name = 'test_service'
+    apm_environment = 'test_env'
+    apm_server_url = 'http://localhost'
 @patch('requests.get', MagicMock())
-@patch('configs.db.ENV', MockENVAPM)
+@patch.object(SettingsManager, 'settings', MockAPMSetting)
 def test_connect_apm_service_initializes_client(mock_apm_client, mock_logger_info):
     ElasticsearchConnection.apm_client = None
     result = ElasticsearchConnection.connect_apm_service()
@@ -111,12 +112,14 @@ def test_get_apm_client_initialized():
     assert result == ElasticsearchConnection.apm_client
 
 
+@patch.object(SettingsManager, 'settings', MockAPMSetting)
 @patch('requests.get')
 def test_check_apm_connection_success(mock_request, mock_logger_info):
     mock_request.return_value.status_code = 200  # Simulate successful connection
     assert ElasticsearchConnection.check_apm_connection() is True
     mock_logger_info.assert_called_with("::: [\033[96mAPM\033[0m] connected \033[92msuccessfully\033[0m. :::")
 
+@patch.object(SettingsManager, 'settings', MockAPMSetting)
 @patch('requests.get')
 def test_check_apm_connection_failure(mock_request, mock_logger_info, mock_logger_error):
     mock_request.return_value.status_code = 500
@@ -124,6 +127,7 @@ def test_check_apm_connection_failure(mock_request, mock_logger_info, mock_logge
     mock_logger_info.assert_called_with("\033[91mFailed\033[0m to connect to [\033[96mAPM\033[0m].")
     mock_logger_error.assert_not_called()
 
+@patch.object(SettingsManager, 'settings', MockAPMSetting)
 @patch('requests.get')
 def test_check_apm_connection_exception(mock_request, mock_logger_info, mock_logger_error):
     mock_request.side_effect = Exception("Connection error")
@@ -146,6 +150,16 @@ def test_apm_capture_exception(mock_logger_info):
     mock_logger_info.assert_called_once_with("Exception captured in APM client.")
 
 
+class MockESESAPMSetting:
+    es_host = 'localhost'
+    es_port = 9200
+    es_version = '7.10.2'
+    es_user = ''
+    es_password = ''
+    apm_service_name = 'test_service'
+    apm_environment = 'test_env'
+    apm_server_url = 'http://localhost'
+@patch.object(SettingsManager, 'settings', MockESESAPMSetting)
 @patch('requests.get', MagicMock())
 def test_elasticsearch_connection_initialization(mock_es_client, mock_apm_client, mock_logger_info):
     ElasticsearchConnection.es_client = None
@@ -170,19 +184,22 @@ def test_elasticsearch_connection_already_initialized(mock_request, mock_es_clie
     mock_es_client.assert_not_called()
 
 
-class MockENV:
-    EXAMPLE_INDEX_NAME = 'example_index'
-    OTHER_INDEX_NAME = 'other_index'
-    __private_var = 'should_not_be_included'
-    CALLABLE_INDEX_NAME = lambda: 'should_not_be_callable'
-
+class MockESIndexSetting:
+    sentences_vector_size = 512
+    @classmethod
+    def model_dump(cls):
+        return {
+            'example_index_name': 'example_index',
+            'other_index_name': 'other_index',
+            '__private_var': 'should_not_be_included',
+            'callable_index_name': lambda: 'should_not_be_callable'
+        }
 class MockConfigs:
     EXAMPLE_CONFIG = {'setting': 'value'}
     OTHER_CONFIG = {'setting': 'other_value'}
     __private_var = 'should_not_be_included'
     CALLABLE_CONFIG = lambda: 'should_not_be_callable'
-
-@patch('configs.db.ENV', MockENV)
+@patch.object(SettingsManager, 'settings', MockESIndexSetting)
 @patch('configs.db.ElasticsearchIndexConfigs', MockConfigs)
 def test_elasticsearch_index_initialization():
     es_index = ESIndex()

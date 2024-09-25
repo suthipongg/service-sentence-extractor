@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from configs.es_model import ElasticSearchConfigs, ElasticsearchIndexConfigs
-
+from configs.config import SettingsManager
 
 def test_elasticsearch_configs():
     expected_settings = {
@@ -56,9 +56,9 @@ def test_elasticsearch_configs():
     
     assert ElasticSearchConfigs.Settings == expected_settings
 
-@patch('configs.environment.ENV')
-def test_elasticsearch_index_configs(mock_env):
-    mock_env.SENTENCES_VECTOR_SIZE = 1024
+def test_elasticsearch_index_configs(mock_settings_manager):
+    mock_settings_manager.sentences_vector_size = 33
+    ElasticsearchIndexConfigs()
     expected_index_config = {
         "settings": ElasticSearchConfigs.Settings,
         "mappings": {
@@ -93,7 +93,7 @@ def test_elasticsearch_index_configs(mock_env):
                 },
                 "sentence_vector": {
                     "type": "dense_vector",
-                    "dims": 1024
+                    "dims": 33
                 },
                 "created_at" : {
                     "type" : "date"

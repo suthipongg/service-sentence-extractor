@@ -1,8 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
-from pymongo import ASCENDING, DESCENDING
-
 from dateutil.parser import parse as date_parse
 
 from controllers.mongodb_controller import MongoDBCRUD, MGFuncs
@@ -22,9 +20,9 @@ def mock_collection_items():
 class TestMongoDBCRUD:
     @patch('controllers.mongodb_controller.MongoDBConnection.mongo_client')
     def test_mongo_crud(self, mock_mongo_client):
-        MongoDBCRUD()
+        instance = MongoDBCRUD()
         assert MongoDBCRUD.mongo_client is mock_mongo_client
-
+        assert instance.mongo_client is mock_mongo_client
 
 
 class TestMGFuncs:

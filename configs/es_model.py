@@ -1,4 +1,4 @@
-from configs.environment import ENV
+from configs.config import SettingsManager
 
 class ElasticSearchConfigs:
     Settings = {
@@ -52,53 +52,58 @@ class ElasticSearchConfigs:
     }
 
 class ElasticsearchIndexConfigs:
-    EXTRACTED_CONFIG = {
-        "settings": ElasticSearchConfigs.Settings,
-        "mappings": {
-            "properties": {
-                "id": {
-                    "type": "text",
-                    "fields": {
-                        "keyword": {
-                            "type": "keyword"
+    EXTRACTED_CONFIG = None
+
+    def __new__(cls):
+        instance = super().__new__(cls)
+        cls.EXTRACTED_CONFIG = {
+            "settings": ElasticSearchConfigs.Settings,
+            "mappings": {
+                "properties": {
+                    "id": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword"
+                            }
                         }
-                    }
-                },
-                "sentence": {
-                    "type": "text",
-                    "fields": {
-                        "trigram": {
-                            "type": "text",
-                            "analyzer": "trigram"
-                        },
-                        "keyword": {
-                            "type": "keyword"
-                        },
-                        "autocomplete": {
-                            "type": "text",
-                            "analyzer": "autocomplete",
-                            "search_analyzer": "standard",
-                        },
-                        "completion": {
-                            "type": "completion"
+                    },
+                    "sentence": {
+                        "type": "text",
+                        "fields": {
+                            "trigram": {
+                                "type": "text",
+                                "analyzer": "trigram"
+                            },
+                            "keyword": {
+                                "type": "keyword"
+                            },
+                            "autocomplete": {
+                                "type": "text",
+                                "analyzer": "autocomplete",
+                                "search_analyzer": "standard",
+                            },
+                            "completion": {
+                                "type": "completion"
+                            }
                         }
-                    }
-                },
-                "sentence_vector": {
-                    "type": "dense_vector",
-                    "dims": ENV.SENTENCES_VECTOR_SIZE
-                },
-                "created_at" : {
-                    "type" : "date"
-                },
-                "counter": {
-                    "type": "long",
-                    "fields": {
-                        "keyword": {
-                            "type": "keyword"
+                    },
+                    "sentence_vector": {
+                        "type": "dense_vector",
+                        "dims": SettingsManager.settings.sentences_vector_size
+                    },
+                    "created_at" : {
+                        "type" : "date"
+                    },
+                    "counter": {
+                        "type": "long",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword"
+                            }
                         }
                     }
                 }
             }
         }
-    }
+        return instance

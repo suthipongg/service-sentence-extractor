@@ -11,7 +11,7 @@ class ElasticsearchCRUD(ElasticsearchConnection):
     def create_index_es(cls, index_name, mapping):
         index_exist = cls.es_client.indices.exists(index=index_name)
         if not index_exist:
-            created = cls.es_client.indices.create(index=index_name, ignore=[400, 404], **mapping)
+            created = cls.es_client.indices.create(index=index_name, **mapping)
             return created
         return None
 
@@ -49,7 +49,7 @@ class ElasticsearchCRUD(ElasticsearchConnection):
     
     @classmethod
     def delete_es(cls, index_name, id):
-        deleted = cls.es_client.delete(index=index_name, id=id, ignore=[400, 404])
+        deleted = cls.es_client.delete(index=index_name, id=id)
         return deleted
     
     @classmethod
@@ -67,15 +67,15 @@ class ElasticsearchCRUD(ElasticsearchConnection):
 class ESFuncs(ElasticsearchCRUD):
     @classmethod
     def start_index_es(cls):
-        index = ESIndex()
-        for index_name in index.all_index_name.keys():
-            LoggerConfig.logger.info(f'[\033[96mSTART\033[0m] Create Index {index.all_index_name[index_name]} :::')
-            created = cls.create_index_es(index.all_index_name[index_name], index.all_index_config[index_name])
+        all_index_name, all_index_config = ESIndex.init_index()
+        for index_name in all_index_name.keys():
+            LoggerConfig.logger.info(f'[\033[96mSTART\033[0m] Create Index {all_index_name[index_name]} :::')
+            created = cls.create_index_es(all_index_name[index_name], all_index_config[index_name])
             if created:
-                LoggerConfig.logger.info(f'{index.all_index_name[index_name]} \033[96mCreated\033[0m :::')
+                LoggerConfig.logger.info(f'{all_index_name[index_name]} \033[96mCreated\033[0m :::')
             else:
-                LoggerConfig.logger.info(f'{index.all_index_name[index_name]} Already Exists :::')
-            LoggerConfig.logger.info(f'[\033[96mEND\033[0m] Create Index {index.all_index_name[index_name]} :::')
+                LoggerConfig.logger.info(f'{all_index_name[index_name]} Already Exists :::')
+            LoggerConfig.logger.info(f'[\033[96mEND\033[0m] Create Index {all_index_name[index_name]} :::')
 
     @classmethod
     def update_counter(cls, index_name, id):
@@ -150,7 +150,7 @@ class ESFuncs(ElasticsearchCRUD):
                 }
             }
         }
-        result = cls.search_es(index_name=index_name, **query, ignore=[404, 400])
+        result = cls.search_es(index_name=index_name, **query)
         return {"status": True, "data": result['aggregations']}
     
     @classmethod

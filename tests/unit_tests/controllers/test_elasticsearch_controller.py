@@ -17,7 +17,7 @@ class TestElasticsearchCRUD:
         mock_es_client_attr.indices.create.return_value = {"acknowledged": True}
 
         result = ElasticsearchCRUD.create_index_es('test_index', {'mappings': {}})
-        mock_es_client_attr.indices.create.assert_called_once_with(index='test_index', mappings={}, ignore=[400, 404])
+        mock_es_client_attr.indices.create.assert_called_once_with(index='test_index', mappings={})
         mock_es_client_attr.indices.exists.assert_called_once_with(index='test_index')
         assert result == {"acknowledged": True}
 
@@ -133,7 +133,7 @@ class TestElasticsearchCRUD:
 
         result = ElasticsearchCRUD.delete_es("test_index", id="1")
         assert result == {"_id": "1"}
-        mock_es_client_attr.delete.assert_called_once_with(index="test_index", id="1", ignore=[400, 404])
+        mock_es_client_attr.delete.assert_called_once_with(index="test_index", id="1")
 
     def test_delete_by_query_es(self, mock_es_client_attr):
         mock_es_client_attr.delete_by_query.return_value = {"deleted": 2}
@@ -151,17 +151,19 @@ class TestElasticsearchCRUD:
 
 
 class TestESFuncs:
-    @patch('controllers.elasticsearch_controller.ESIndex')
+    @patch('controllers.elasticsearch_controller.ESIndex.init_index')
     @patch('controllers.elasticsearch_controller.ElasticsearchCRUD.create_index_es', autospec=True)
     def test_start_index_es(self, mock_create_ind, mock_index, mock_logger_info):
-        mock_index.return_value.all_index_name = {
-            'index1': 'index1_value',
-            'index2': 'index2_value'
-        }
-        mock_index.return_value.all_index_config = {
+        mock_index.return_value = (
+            {
+                'index1': 'index1_value',
+                'index2': 'index2_value'
+            },
+            {
             'index1': {'setting': 'value1'},
             'index2': {'setting': 'value2'}
-        }
+            }
+        )
         mock_create_ind.side_effect = [True, False]
         ESFuncs.start_index_es()
 
@@ -265,7 +267,7 @@ class TestESFuncs:
             }
         }
 
-        mock_search_es.assert_called_once_with(index_name='test_index', **expected_query, ignore=[404, 400])
+        mock_search_es.assert_called_once_with(index_name='test_index', **expected_query)
         assert result == {"status": True, "data": {'total_by_day': {'buckets': []}, 'total_count': {'value': 100}}}
 
     @patch('controllers.elasticsearch_controller.ElasticsearchCRUD.search_es', autospec=True)

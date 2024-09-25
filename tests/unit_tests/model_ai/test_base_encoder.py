@@ -3,18 +3,15 @@ from unittest.mock import patch
 
 import torch
 
-from configs.environment import ENV
 from model_ai.base_encoder import BaseEncoder
 
-
-@patch('model_ai.base_encoder.ENV')
-def test_base_encoder_init(mock_env):
-    mock_env.DEVICE = 'cuda'
+def test_base_encoder_init(mock_settings_manager):
+    mock_settings_manager.device = 'cuda'
     with patch('torch.cuda.is_available', return_value=True):
         encoder = BaseEncoder()
         assert encoder.device == 'cuda'
 
-    mock_env.DEVICE = 'cpu'
+    mock_settings_manager.device = 'cpu'
     with patch('torch.cuda.is_available', return_value=False):
         encoder = BaseEncoder()
         assert encoder.device == 'cpu'
