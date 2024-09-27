@@ -44,8 +44,9 @@ Make sure you have the following software installed:
 - [GitHub Project](https://github.com/Nawaphong-13/Service-sentence-extractor)
 - [Python3](https://www.python.org/)
 - [pm2](https://pm2.keymetrics.io/docs/usage/quick-start/)
-- [Elasticsearch](https://www.elastic.co/) (version 7.17.x)
 - [MongoDB](https://www.mongodb.com/)
+- [Elasticsearch](https://www.elastic.co/) (version 7.17.x)
+- [APM](https://www.elastic.co/observability/application-performance-monitoring) (version same as Elasticsearch)
 - [Sentence Transformers Model](https://sbert.net/docs/sentence_transformer/pretrained_models.html#multilingual-models) (current model -> [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3))
 
 ### Multilingual Models
