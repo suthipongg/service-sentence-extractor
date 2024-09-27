@@ -20,7 +20,6 @@
 - [Deployment](#deployment)
 - [Usage](#usage)
 - [Authors](#authors)
-- [VERSION](#version)
 
 ## 🧐 About <a name = "about"></a>
 
@@ -47,86 +46,107 @@ Make sure you have the following software installed:
 - [pm2](https://pm2.keymetrics.io/docs/usage/quick-start/)
 - [Elasticsearch](https://www.elastic.co/) (version 7.17.x)
 - [MongoDB](https://www.mongodb.com/)
-- [Sentence Transformers](https://sbert.net/docs/sentence_transformer/pretrained_models.html#multilingual-models) (current model -> [paraphrase-multilingual-MiniLM-L12-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2))
+- [Sentence Transformers Model](https://sbert.net/docs/sentence_transformer/pretrained_models.html#multilingual-models) (current model -> [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3))
 
 ### Multilingual Models
-Models | Dimensions | Size(MB) | Suitable Score Functions | Speed(sentence/sec in V100) | Performance Semantic Search(Higher=Better)
----|---|---|---|---|---
-[paraphrase-multilingual-MiniLM-L12-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2) (Recommended)| 384 | 420 | cosine-similarity | 7500 | 39.19
-[paraphrase-multilingual-mpnet-base-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-mpnet-base-v2) | 768 | 970 | cosine-similarity | 2500 | 41.68
+Models | Dimensions | Size | Suitable Score Functions | Performance Semantic Search Ranking
+---|---|---|---|---
+[BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3) (Recomened) | 1024 | 4.2GB | cosine-similarity | 1
+[paraphrase-multilingual-MiniLM-L12-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2) | 384 | 420MB | cosine-similarity  | 3
+[paraphrase-multilingual-mpnet-base-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-mpnet-base-v2) | 768 | 970MB | cosine-similarity  | 2
 
 ### Installation
 
-1. Clone this GitHub repository:
+1. **Clone this GitHub repository**:
   ```bash
   git clone https://github.com/Nawaphong-13/Service-sentence-extractor
   ```
 
-2. Create a virtual environment:
+2. **Change working directory** to Service-sentence-extractor
+  ```bash
+  cd Service-sentence-extractor
+  ```
+
+3. **Create a virtual environment**:
   ```bash
   python3 -m venv venv
   ```
 
-3. Activate the virtual environment:
+4. **Activate the virtual environment**:
   ```bash
   # For Linux
   source venv/bin/activate
   ```
 
-4. Install the required packages from the requirements file:
+5. **Install the required packages** from the requirements file:
   ```bash
   pip install -r requirements.txt
   ```
 
-5. Run service
-  ```bash
-  uvicorn app:app --workers 1 --host 0.0.0.0 --port 8087 --reload
-  ```
+
 
 ## 🔧 Running the tests <a name = "tests"></a>
 
 To run the automated tests for this system, follow these steps:
 
-1. Navigate to the GitHub project directory:
+1. **Change working directory** to Service-sentence-extractor
   ```bash
-  cd test_api
+  cd Service-sentence-extractor
   ```
 
-2. Run test for the GitHub project:
+2. **Run unit test** for the GitHub project & check report:
   ```bash
-  bash test_api.bash 
+  # pytest
+  coverage run -m pytest -s tests/unit_tests
+  # report
+  coverage report -m
   ```
 
-3. Test sentence extractor
+3. **Run integration test** for the GitHub project:
   ```bash
-  curl -X 'POST' \
-    'http://localhost:8087/extractor' \
-    -H 'accept: application/json' \
-    -H 'Authorization: Bearer dev' \
-    -H 'Content-Type: application/json' \
-    -d '{
-    "sentence": "test"
-  }'
+  pytest -s tests/integration_tests
   ```
 
-4. Test display history sentence extracted
+4. **Try to run service** (ENVIRONMENT=[dev, prod]) (Create '.env.prod' before set ENVIRONMENT=prod)
   ```bash
-  curl -X 'GET' \
-    'http://localhost:8087/extractor?page_start=1&page_size=10' \
-    -H 'accept: application/json' \
-    -H 'Authorization: Bearer dev'
-```
+  ENVIRONMENT=prod uvicorn app:app --workers 1 --host 0.0.0.0 --port 8087 --reload
+  ```
 
 ## 🎈 Usage <a name="usage"></a>
 
 To use the system, follow these steps:
 
-1. **Run the application:**
+1. **Edit ecosystem.config.js & start_pm2.sh**:
+  ```js
+  // ecosystem.config.js
+  module.exports = {
+    "apps": [{
+        "name": "service-sentence-extractor",
+        "script": "uvicorn app:app --workers 1 --host 0.0.0.0 --port 8087",
+        "instances": "1",
+        "output": "./logs/my-app-out.log",
+        "error": "./logs/my-app-error.log"
+    }]
+  }
+  ```
+  ```bash
+  # start_pm2.sh
+
+  #!/bin/bash
+
+  source venv/bin/activate 
+
+  pm2 del service-sentence-extractor
+  pm2 start
+  pm2 log service-sentence-extractor
+  ```
+
+2. **Run the application:**
   ```bash
   bash start_pm2.sh
   ```
 
-2. **Access the application:**
+3. **Access the application:**
     Open your browser and navigate to `http://localhost:8087`
 
 This section provides clear instructions for running the UVicorn servers for this project. Adjust it as needed based on your project's specifics.
@@ -144,20 +164,3 @@ This section provides clear instructions for running the UVicorn servers for thi
 5. **Build and Install**: Build your project and install any required dependencies using the appropriate package manager (e.g., pip for Python projects). You may also need to compile any frontend assets if applicable.
 
 6. **Run Servers**: Start the necessary servers for your project, such as UVicorn for running your web application and any other backend services (e.g., Elasticsearch, MongoDB, Redis).
-
-<details>
-<summary>Version</summary>
-
-# Version History
-
-## [0.0.1] (2024-07-23)
-### Added
-- GPU usage condition.
-### Fixed
-- Pydantic model type issue: now uses `datetime`.
-
-## [0.0.0] (2024-07-05)
-### Added
-- Initial release of the project.
-
-</details>
