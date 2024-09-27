@@ -7,7 +7,7 @@
 ## Release Note (`[0.0.2] - 2024-09-26`)
 
 ### Changed
- - [[```latest```](https://github.com/Nawaphong-13/Service-sentence-extractor/commits/main/)] __-__ update README & change version to CHANGELOG (suthipong)
+ - [[```38327ae```](https://github.com/Nawaphong-13/Service-sentence-extractor/commit/afb10e4df018a0f557d1b06aefa40eb2211e765e)] __-__ update README & change version to CHANGELOG (suthipong)
  - [[```afb10e4```](https://github.com/Nawaphong-13/Service-sentence-extractor/commit/afb10e4df018a0f557d1b06aefa40eb2211e765e)] __-__ Change config file type python to .env & clean data
  - [[```33ed727```](https://github.com/Nawaphong-13/Service-sentence-extractor/commit/33ed72795213ac780f60981b513fcc4243201680)] __-__ Refactor model ai structure (suthipongg)
 
