@@ -19,7 +19,6 @@
 - [Running the tests](#tests)
 - [Deployment](#deployment)
 - [Usage](#usage)
-- [Authors](#authors)
 
 ## 🧐 About <a name = "about"></a>
 
@@ -47,7 +46,7 @@ Make sure you have the following software installed:
 - [MongoDB](https://www.mongodb.com/)
 - [Elasticsearch](https://www.elastic.co/) (version 7.17.x)
 - [APM](https://www.elastic.co/observability/application-performance-monitoring) (version same as Elasticsearch)
-- [Sentence Transformers Model](https://sbert.net/docs/sentence_transformer/pretrained_models.html#multilingual-models) (current model -> [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3))
+- Sentence Transformers Model (current model -> [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3))
 
 ### Multilingual Models
 Models | Dimensions | Size | Suitable Score Functions | Performance Semantic Search Ranking
